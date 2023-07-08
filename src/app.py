@@ -7,11 +7,11 @@ from flask_migrate import Migrate
 from flask_swagger import swagger
 from flask_cors import CORS
 from api.utils import APIException, generate_sitemap
-from api.models import db, User
+from api.models import db
 from api.routes import api
 from api.admin import setup_admin
 from api.commands import setup_commands
-from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token, JWTManager
+from flask_jwt_extended import JWTManager
 
 
 
@@ -32,6 +32,10 @@ else:
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db, compare_type = True)
 db.init_app(app)
+
+
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET")
+jwt = JWTManager(app)
 
 # Allow CORS requests to this API
 CORS(app)
@@ -65,81 +69,6 @@ def serve_any_other_file(path):
     response = send_from_directory(static_file_dir, path)
     response.cache_control.max_age = 0 # avoid cache memory
     return response
-
-
-@app.route('/hello', methods=["GET"])
-def hello():
-    return "Hello from the API!"
-
-
-@app.route('/register', methods=["POST"])
-def register_user():
-    user_email = request.json.get("email", None)
-    user_password = request.json.get("password", None)
-    user_exists = User.query.filter_by(email = user_email).first()
-    if user_exists:
-        return jsonify({"msg": "Sorry, this user already exists!"}), 300
-    new_user = User(email = user_email, password = user_password)
-    db.session.add(new_user)
-    db.session.commit()
-    return jsonify({"msg": "New user has been created!"}), 200
-
-
-@app.route('/users', methods=['GET'])
-def get_users():
-    all_users = User.query.all()
-    all_users = list(map(lambda index: index.serialize(), all_users))
-    response_body = jsonify(all_users)
-    return response_body, 200
-
-@app.route('/users/<id>', methods=['DELETE'])
-def delete_user(id):
-    delete_user = User.query.get(id)
-    if delete_user is None:
-        return jsonify({"Error": "User not found"})
-    db.session.delete(delete_user)
-    db.session.commit()
-    return jsonify({"msg": "User successfully deleted"}), 200
-
-@app.route('/users', methods=['GET'])
-def get_users():
-    all_users = User.query.all()
-    all_users = list(map(lambda index: index.serialize(), all_users))
-    response_body =jsonify(all_users)
-    return response_body, 200
-
-@app.route('/users <id>', methods=['DELETE'])
-def delete_user(id):
-    delete_user = User.query.get(id)
-    if delete_user is None:
-        return jsonify({"Error": "User not found"})
-    db.session.delete(delete_user)
-    db.session.commit()
-    return jsonify({"msg": "User successfully deleted"}), 200
-
-
-@app.route('/login', methods=['POST'])
-def user_login():
-    user_email = request.json.get("email", None)
-    user_password = request.json.get("password", None)
-    user = User.query.filter_by(email = user_email, password = user_password).first()
-
-    if user is None:
-        return jsonify({"Error": "Wrong email or password"}), 401
-    
-    token = create_access_token(identity=user.id)
-    return jsonify({"response": "Successfully logged in", "token": token, "email": user.email}), 200
-
-
-@app.route('/private', methods=['GET'])
-@jwt_required()
-def show_email():
-    current_user_id = get_jwt_identity()
-    user = User.query.get(current_user_id)
-    return jsonify({"response": "User logged in", "email": user.email}), 200
-
-
-
 
 
 
