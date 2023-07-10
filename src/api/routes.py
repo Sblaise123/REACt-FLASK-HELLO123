@@ -19,6 +19,10 @@ def handle_hello():
 
     return jsonify(response_body), 200
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> refs/remotes/origin/main
 @api.route('/private', methods=['GET'])
 @jwt_required()
 def show_email():
@@ -26,7 +30,10 @@ def show_email():
     user = User.query.get(current_user_id)
     return jsonify({"response": "User logged in", "email": user.email}), 200
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> refs/remotes/origin/main
 @api.route('/login', methods=['POST'])
 def user_login():
     user_email = request.json.get("email", None)
@@ -68,3 +75,8 @@ def get_users():
     response_body =jsonify(all_users)
     return response_body, 200
 
+<<<<<<< HEAD
+=======
+
+
+>>>>>>> refs/remotes/origin/main
